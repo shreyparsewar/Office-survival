@@ -1,0 +1,800 @@
+body.office-immersive-theme {
+  --office-paper: #faf5e3;
+  --office-ink: #102735;
+  --office-green: #368653;
+  --office-orange: #ffb333;
+  --office-cyan: #22bccc;
+  --ink: #102735;
+  background: #647c77;
+}
+.immersive-office.scranton-app {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  min-height: 640px;
+  padding: 0;
+  overflow: hidden;
+  color: var(--office-ink);
+  font-family: "Courier New", monospace;
+}
+.immersive-scene {
+  position: absolute;
+  inset: 78px 0 0;
+}
+.immersive-office .scranton-world {
+  height: 100%;
+  width: 100%;
+  background: #8c9a88;
+  overflow: hidden;
+}
+.immersive-office .scranton-canvas {
+  position: absolute;
+  inset: 0;
+}
+.immersive-office .scranton-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.immersive-office .scranton-room-label,
+.immersive-office .scranton-world-top,
+.immersive-office .scranton-world-caption {
+  display: none;
+}
+.office-hud-wrap {
+  position: absolute;
+  left: 15px;
+  right: 15px;
+  top: 8px;
+  z-index: 5;
+}
+.office-hud {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  padding: 10px 20px 11px;
+}
+.office-hud h1.retro {
+  font-size: clamp(17px, 1.65vw, 28px);
+  letter-spacing: -1px;
+  line-height: 1.2;
+  width: 27%;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.office-hud h1 span {
+  display: block;
+}
+.office-meters {
+  display: flex;
+  flex: 1;
+  gap: 30px;
+  min-width: 0;
+}
+.office-meter {
+  flex: 1;
+  min-width: 0;
+}
+.office-meter > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 2px 10px;
+  font-size: clamp(9px, 1vw, 15px);
+}
+.office-meter b {
+  animation: scranton-pop 0.25s steps(3);
+}
+.office-meter [data-slot="progress"] {
+  height: 14px;
+  background: var(--office-paper);
+}
+.office-meter [data-slot="progress-indicator"] > div {
+  gap: 1px;
+}
+.office-meter [data-slot="progress-indicator"] > div > div {
+  margin: 0;
+  border-right: 2px solid var(--office-ink);
+}
+.office-time {
+  border-left: 2px solid var(--office-ink);
+  padding-left: 24px;
+  width: 20%;
+  max-width: 260px;
+  text-align: center;
+}
+.office-time > strong {
+  display: block;
+  font-size: clamp(14px, 1.5vw, 23px);
+  white-space: nowrap;
+  line-height: 1.35;
+}
+.office-manager {
+  margin-top: 5px;
+  border: 2px solid var(--office-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+.office-manager .retro {
+  font-size: clamp(6px, 0.64vw, 10px);
+}
+.office-manager .scranton-portrait.small {
+  width: 25px;
+  height: 26px;
+  border: 0;
+}
+.office-toolbar {
+  position: absolute;
+  z-index: 4;
+  top: 115px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+.office-toolbar button {
+  background: var(--office-paper);
+  height: 27px;
+  font-size: 8px;
+  padding: 5px 9px;
+}
+.office-toolbar button svg {
+  width: 14px;
+  height: 14px;
+}
+.office-toolbar button[data-size="icon"] {
+  width: 25px;
+  padding: 4px;
+}
+.office-nav-count {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+}
+.office-person-wrap {
+  position: absolute;
+  z-index: 3;
+  right: 24px;
+  bottom: 72px;
+  width: clamp(345px, 30vw, 490px);
+}
+.office-person {
+  padding: 10px 13px 15px;
+}
+.office-pixel-heading {
+  color: var(--office-paper);
+  background: var(--office-ink);
+  padding: 9px 14px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.office-pixel-heading h2.retro,
+.office-today h2.retro {
+  font-size: clamp(11px, 1.22vw, 18px);
+  line-height: 1.5;
+  font-weight: normal;
+}
+.office-pixel-heading button {
+  color: var(--office-paper);
+  height: 22px;
+  padding: 0;
+  font-size: 10px;
+}
+.office-person-body {
+  display: flex;
+  gap: 17px;
+  align-items: start;
+}
+.office-person-body .scranton-portrait {
+  width: 90px;
+  height: 96px;
+  flex-shrink: 0;
+  border: 5px solid var(--office-ink);
+  box-shadow: none;
+}
+.office-person-body > div {
+  flex: 1;
+  min-width: 0;
+}
+.office-person-role {
+  display: block;
+  font-size: 14px;
+  padding: 0 0 7px;
+  border-bottom: 1px dashed var(--office-ink);
+  margin-bottom: 7px;
+}
+.office-person-body p {
+  font-size: clamp(14px, 1.1vw, 18px);
+  line-height: 1.3;
+  animation: scranton-in 0.2s steps(3);
+}
+.office-person-buttons {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  padding: 0 7px;
+  margin-top: 24px;
+}
+.office-person-buttons button {
+  height: 40px;
+  font-size: clamp(10px, 1.04vw, 16px);
+  padding: 8px 8px;
+}
+.office-task-progress {
+  margin: 15px 6px 0;
+}
+.office-task-progress > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+.office-task-progress > span b {
+  white-space: nowrap;
+}
+.office-task-help {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+.office-task-help button {
+  height: 20px;
+  padding: 0;
+  font-size: 11px;
+}
+.office-task-help small {
+  font-size: 11px;
+}
+.office-today-wrap {
+  position: absolute;
+  bottom: 72px;
+  left: 24px;
+  z-index: 3;
+  width: clamp(285px, 24vw, 400px);
+}
+.office-today {
+  padding: 9px 11px 10px;
+}
+.office-today h2 {
+  margin-bottom: 5px;
+}
+.office-today > button {
+  text-transform: none;
+  width: 100%;
+  justify-content: start;
+  padding: 6px 4px;
+  height: 34px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px dashed #8a9487;
+  font-size: 14px;
+}
+.office-today > button > b {
+  font-weight: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.office-today time {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.office-check {
+  border: 2px solid var(--office-ink);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.office-check svg {
+  width: 14px;
+  height: 14px;
+}
+.office-today > button.office-branch-goal {
+  border-bottom: 0;
+  font-size: 12px;
+}
+.office-today .office-branch-goal time {
+  font-weight: bold;
+  font-size: 12px;
+}
+.office-footer-wrap {
+  position: absolute;
+  z-index: 4;
+  left: 15px;
+  right: 15px;
+  bottom: 10px;
+}
+.office-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 5px 14px;
+  font-weight: bold;
+  font-size: 14px;
+}
+.office-footer b {
+  margin: 0 9px;
+}
+.office-footer small {
+  position: absolute;
+  right: 13px;
+  font-weight: normal;
+  font-size: 9px;
+  opacity: 0.65;
+}
+.office-advance {
+  position: absolute;
+  top: 116px;
+  right: 26px;
+  z-index: 4;
+  display: flex;
+  align-items: end;
+  flex-direction: column;
+  gap: 10px;
+}
+.office-advance button {
+  font-size: 9px;
+  height: 27px;
+}
+.office-advance > span {
+  font-size: 11px;
+  color: var(--office-ink);
+  background: var(--office-paper);
+  padding: 3px 6px;
+}
+.office-feedback {
+  position: absolute;
+  z-index: 3;
+  top: 176px;
+  right: 25px;
+  max-width: 320px;
+  padding: 9px 12px;
+  background: var(--office-paper);
+  border: 2px solid var(--office-ink);
+  font-size: 12px;
+  animation: scranton-in 0.2s steps(3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.office-feedback button {
+  font-size: 10px;
+  height: 18px;
+  padding: 0;
+  align-self: end;
+}
+.office-welcome-wrap {
+  position: absolute;
+  z-index: 6;
+  top: 32%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  max-width: calc(100% - 46px);
+  box-shadow: 0 12px 50px #10273538;
+}
+.office-welcome {
+  padding: 24px;
+}
+.office-welcome h2.retro {
+  font-size: 15px;
+  margin-bottom: 15px;
+}
+.office-welcome p {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.office-welcome > div {
+  display: flex;
+  justify-content: end;
+  gap: 22px;
+  margin-top: 23px;
+}
+.office-welcome button {
+  font-size: 10px;
+}
+.immersive-office .scranton-character-label {
+  transform: translate(-50%, -100%);
+  z-index: 2;
+}
+.immersive-office .scranton-character-label button {
+  font-size: 10px;
+  height: 32px;
+  padding: 8px 15px;
+  background: var(--office-paper);
+  color: var(--office-ink);
+  border-color: var(--office-ink);
+}
+.immersive-office .scranton-character-label button > span {
+  border-color: var(--office-ink);
+}
+.immersive-office .scranton-character-label::after {
+  content: "";
+  position: absolute;
+  left: calc(50% - 5px);
+  bottom: -15px;
+  width: 12px;
+  height: 12px;
+  background: var(--office-paper);
+  border-right: 3px solid var(--office-ink);
+  border-bottom: 3px solid var(--office-ink);
+  transform: rotate(45deg);
+}
+.office-coworker-bubble { position:absolute;transform:translate(-50%,-100%);z-index:2; }
+.office-coworker-bubble button { background:var(--office-paper);font-size:8px;height:24px;padding:4px 10px; }
+.office-coworker-bubble::after { content:"";position:absolute;left:calc(50% - 5px);bottom:-13px;width:10px;height:10px;background:var(--office-paper);border-right:3px solid var(--office-ink);border-bottom:3px solid var(--office-ink);transform:rotate(45deg); }
+.immersive-office .scranton-character-label button.office-working-bubble { height:auto;padding:10px 16px;display:flex;flex-direction:column;gap:10px;width:235px;white-space:normal; }
+.office-working-bubble > span:not([data-slot]) { font-size:8px;line-height:1.7; }
+.office-working-bubble small { font-family:"Courier New",monospace;font-size:13px;text-transform:none; }
+.immersive-office .scranton-scene-controls {
+  bottom: 245px;
+  left: 25px;
+  right: auto;
+  gap: 17px;
+}
+.immersive-office .scranton-scene-controls button {
+  width: 25px;
+  height: 25px;
+  padding: 5px;
+}
+.immersive-office .scranton-scene-controls svg {
+  width: 15px;
+  height: 15px;
+}
+.office-directory-dialog {
+  max-width: 670px !important;
+  width: calc(100vw - 46px) !important;
+}
+.office-directory-dialog .scranton-sidebar {
+  width: 100%;
+}
+.office-directory-dialog .scranton-sidebar > div {
+  min-height: 0;
+  border: none;
+}
+.office-directory-dialog .scranton-sidebar > div > div:last-child {
+  display: none;
+}
+.office-directory-dialog .scranton-panel-tabs {
+  gap: 16px;
+}
+.office-directory-dialog .scranton-person-panel {
+  display: block !important;
+}
+.office-directory-title {
+  font-family: "Press Start 2P", monospace;
+  font-size: 12px !important;
+  padding-bottom: 5px;
+}
+.office-directory-dialog .scranton-team-list {
+  height: 350px;
+}
+.office-directory-dialog .scranton-person-actions {
+  margin-top: 16px;
+}
+.office-directory-dialog .scranton-memory {
+  margin-top: 16px;
+}
+.office-station-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  padding: 10px 5px;
+}
+.office-station-grid button {
+  display: flex;
+  height: auto;
+  white-space: normal;
+  flex-direction: column;
+  align-items: start;
+  gap: 5px;
+  text-align: left;
+  padding: 12px;
+  font-size: 13px;
+}
+.office-station-grid button span {
+  font-size: 11px;
+}
+body.office-immersive-theme .scranton-dialog [data-slot="dialog-title"] {
+  color: var(--office-ink);
+}
+body.office-immersive-theme .scranton-dialog {
+  color: var(--office-ink);
+}
+body.office-immersive-theme .scranton-dialog .bit-dialog-scroll {
+  max-height: calc(100dvh - 100px);
+}
+@media (min-width: 1500px) {
+  .immersive-scene {
+    top: 100px;
+  }
+  .office-toolbar,
+  .office-advance {
+    top: 133px;
+  }
+  .office-person-body .scranton-portrait {
+    width: 115px;
+    height: 120px;
+  }
+  .office-person-buttons button {
+    height: 48px;
+  }
+  .office-person {
+    padding: 12px 16px 19px;
+  }
+  .office-today > button {
+    height: 40px;
+    font-size: 17px;
+  }
+  .office-today time {
+    font-size: 16px;
+  }
+  .office-pixel-heading {
+    padding: 12px 15px;
+  }
+  .office-footer {
+    font-size: 17px;
+  }
+  .office-feedback {
+    top: 194px;
+  }
+}
+@media (max-width: 1100px) {
+  .office-hud {
+    gap: 22px;
+    padding: 10px 14px;
+  }
+  .office-meters {
+    gap: 22px;
+  }
+  .office-hud h1.retro {
+    width: 25%;
+    font-size: 17px;
+  }
+  .office-time {
+    padding-left: 16px;
+    width: 21%;
+  }
+  .office-manager {
+    gap: 5px;
+  }
+  .office-manager .retro {
+    font-size: 6px;
+  }
+  .office-toolbar {
+    gap: 16px;
+  }
+  .office-person-wrap {
+    width: 345px;
+  }
+  .office-footer small {
+    display: none;
+  }
+  .office-today-wrap {
+    width: 280px;
+  }
+}
+@media (max-width: 760px) {
+  .immersive-office.scranton-app {
+    min-height: 740px;
+    height: 100dvh;
+  }
+  .office-hud-wrap {
+    left: 12px;
+    right: 12px;
+  }
+  .office-hud {
+    flex-wrap: wrap;
+    gap: 12px 18px;
+    padding: 9px 12px 12px;
+  }
+  .office-hud h1.retro {
+    width: auto;
+    flex: 1;
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .office-hud h1 span {
+    display: inline;
+    margin-left: 8px;
+  }
+  .office-time {
+    border-left: 0;
+    padding: 0;
+    width: auto;
+  }
+  .office-time > strong {
+    font-size: 12px;
+  }
+  .office-manager {
+    display: none;
+  }
+  .office-meters {
+    width: 100%;
+    order: 3;
+    flex-basis: 100%;
+    gap: 20px;
+  }
+  .office-meter > div:first-child {
+    font-size: 8px;
+    margin-bottom: 8px;
+  }
+  .office-meter [data-slot="progress"] {
+    height: 9px;
+  }
+  .immersive-scene {
+    top: 95px;
+  }
+  .office-toolbar {
+    top: 123px;
+    left: 20px;
+    right: 20px;
+    gap: 17px;
+  }
+  .office-toolbar button {
+    font-size: 7px;
+  }
+  .office-toolbar button svg {
+    display: none;
+  }
+  .office-toolbar button:nth-last-child(-n + 3) {
+    width: 22px;
+  }
+  .office-toolbar button:nth-last-child(-n + 3) svg {
+    display: block;
+  }
+  .office-advance {
+    top: 175px;
+    right: 21px;
+  }
+  .office-advance > span {
+    font-size: 9px;
+  }
+  .office-advance button {
+    font-size: 8px;
+  }
+  .office-person-wrap {
+    left: 20px;
+    right: 20px;
+    bottom: 64px;
+    width: auto;
+  }
+  .office-person {
+    padding: 7px 10px 12px;
+  }
+  .office-person-body .scranton-portrait {
+    width: 65px;
+    height: 70px;
+  }
+  .office-person-body {
+    gap: 11px;
+  }
+  .office-person-role {
+    font-size: 12px;
+    padding-bottom: 4px;
+    margin-bottom: 4px;
+  }
+  .office-person-body p {
+    font-size: 13px;
+  }
+  .office-person-buttons {
+    margin-top: 18px;
+  }
+  .office-person-buttons button {
+    height: 30px;
+    font-size: 10px;
+  }
+  .office-pixel-heading {
+    padding: 6px 9px;
+    margin-bottom: 8px;
+  }
+  .office-pixel-heading h2.retro {
+    font-size: 10px;
+  }
+  .office-today-wrap {
+    top: 227px;
+    bottom: auto;
+    left: 21px;
+    width: 215px;
+  }
+  .office-today {
+    padding: 6px;
+  }
+  .office-today h2.retro {
+    font-size: 10px;
+  }
+  .office-today > button {
+    height: 25px;
+    font-size: 10px;
+    gap: 7px;
+    padding: 3px;
+  }
+  .office-today time {
+    font-size: 9px;
+  }
+  .office-check {
+    width: 13px;
+    height: 13px;
+  }
+  .office-check svg {
+    width: 9px;
+    height: 9px;
+  }
+  .office-today .office-branch-goal b {
+    font-size: 10px;
+  }
+  .office-footer-wrap {
+    left: 12px;
+    right: 12px;
+    bottom: 10px;
+  }
+  .office-footer {
+    font-size: 10px;
+    text-align: center;
+    padding: 5px;
+  }
+  .office-footer b {
+    margin: 0 3px;
+  }
+  .office-footer span {
+    max-width: 300px;
+  }
+  .office-welcome-wrap {
+    top: 41%;
+  }
+  .office-welcome {
+    padding: 17px;
+  }
+  .office-welcome h2.retro {
+    font-size: 12px;
+  }
+  .office-welcome p {
+    font-size: 12px;
+  }
+  .office-feedback {
+    top: 362px;
+    right: 20px;
+    left: 21px;
+    max-width: none;
+    font-size: 10px;
+  }
+  .immersive-office .scranton-scene-controls {
+    bottom: 320px;
+    left: 22px;
+    gap: 16px;
+  }
+  .immersive-office .scranton-character-label button {
+    font-size: 8px;
+    height: 25px;
+  }
+  .office-task-progress {
+    margin-top: 10px;
+  }
+  .office-directory-dialog .scranton-person-heading {
+    margin-bottom: 14px;
+  }
+  .office-directory-dialog .scranton-team-list {
+    height: 300px;
+  }
+  .office-station-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .office-meter b,
+  .office-person-body p,
+  .office-feedback {
+    animation: none;
+  }
+}
