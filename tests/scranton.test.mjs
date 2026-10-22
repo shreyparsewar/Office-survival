@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newOffice, officeReducer, validSave } from '../lib/scranton/simulation.ts';
 import { employees, departments } from '../lib/scranton/roster.ts';
-import { findPath, stations, walkable, movementClear, characterClearance } from '../lib/scranton/world.ts';
+import { findPath, findApproachPath, stations, walkable, movementClear, characterClearance } from '../lib/scranton/world.ts';
 import { activeEvent } from '../lib/office/engine.ts';
 import { officeBounds, constrainOfficeCamera } from '../lib/scranton/camera.ts';
 const start=()=>officeReducer(newOffice(42),{type:'START'});
@@ -12,7 +12,10 @@ test('10 unique employees each have an appearance, dialogue and a real assignmen
  for(const e of employees){assert.ok(e.greeting&&e.advice&&e.response&&e.task);let s=start();s=officeReducer(s,{type:'PERSON',id:e.id,kind:'assign'});assert.ok(s.people[e.id].job);assert.equal(s.time,5);s=officeReducer(s,{type:'PERSON',id:e.id,kind:'talk',topic:1});assert.equal(s.people[e.id].trust,55);assert.equal(s.people[e.id].talks,1);assert.ok(s.history.at(-1).text.includes(e.advice));}
 });
 test('all characters and office stations have accessible routes through open doors',()=>{
- for(const target of [...employees.map(e=>e.home),...stations.map(s=>s.position)]){const route=findPath([2,9],target);assert.ok(route.length,`No route to ${target}`);for(const p of route)assert.ok(walkable(...p));for(let i=1;i<route.length;i++)assert.equal(Math.abs(route[i][0]-route[i-1][0])+Math.abs(route[i][1]-route[i-1][1]),1);}
+ for(const from of [[2,9],[9.4,9.3],[15.5,12]]) for(const target of [...employees.map(e=>e.home),...stations.map(s=>s.position)]){
+  const route=findPath(from,target);assert.ok(route.length,`No route from ${from} to ${target}`);let previous=from;
+  for(const p of route){assert.ok(walkable(...p));assert.ok(movementClear(previous,p),`Unsafe segment ${previous} -> ${p}`);previous=p;}
+ }
  assert.equal(findPath([2,9],[99,99]).length,0);
 });
 test('approaching every coworker stops outside their body and seat',()=>{
@@ -26,33 +29,44 @@ test('approaching every coworker stops outside their body and seat',()=>{
   assert.ok(Math.hypot(previous[0]-e.home[0],previous[1]-e.home[1])<3,`Stopped too far from ${e.name}`);
  }
 });
-test('face-to-face conversation routes stop a short, safe distance from every coworker',()=>{
+test('shortest reachable conversation approaches remain safe through consecutive selections',()=>{
  const occupied=employees.map(e=>e.home);
+ let from=[9.4,9.3];
+ for(let repeat=0;repeat<3;repeat++){
  for(const e of employees){
-  const route=findPath([9.4,9.3],[e.home[0],e.home[1]+1.85],occupied);
-  assert.ok(route.length,`No conversation route for ${e.name}`);
-  const end=route.at(-1);
+  const route=findApproachPath(from,e.home,occupied);
+  let previous=from;
+  for(const next of route){assert.ok(movementClear(previous,next,occupied),`Collision en route to ${e.name}`);previous=next;}
+  const end=route.at(-1)??from;
   const distance=Math.hypot(end[0]-e.home[0],end[1]-e.home[1]);
-  assert.ok(distance>=characterClearance&&distance<=2.8,`${e.name}: conversation gap ${distance}`);
+  assert.ok(distance>=characterClearance-1e-6&&distance<=2.15+1e-6,`${e.name}: conversation gap ${distance}`);
   assert.ok(movementClear(end,end,occupied));
+  from=end;
+ }
  }
 });
 test('coworkers arriving at the shared printer keep separate standing spots',()=>{
  const printer=stations.find(s=>s.id==='printer').position;
- const arrived=[];
+ const positions=new Map(employees.map(e=>[e.id,e.home]));
  for(const e of employees.filter(e=>['Sales','Accounting'].includes(e.department))){
-  const occupied=[...employees.filter(other=>other.id!==e.id).map(other=>other.home),...arrived];
-  const route=findPath(e.home,printer,occupied);
+  const occupied=[...positions].filter(([id])=>id!==e.id).map(([,point])=>point);
+  const route=findPath(e.home,printer,occupied,e.id);
   assert.ok(route.length,`No safe printer route for ${e.name}`);
   const destination=route.at(-1);
-  assert.ok(movementClear(destination,destination,occupied));
-  arrived.push(destination);
+  let prior=e.home;for(const next of route){assert.ok(movementClear(prior,next,occupied,e.id));prior=next;}
+  assert.ok(movementClear(destination,destination,occupied,e.id));
+  positions.set(e.id,destination);
  }
 });
-test('movement checks the swept segment rather than only the endpoint',()=>{
- assert.equal(movementClear([2,9],[6,9],[[4,9]]),false);
- assert.equal(movementClear([2,11],[6,11],[[4,9]]),true);
- assert.equal(movementClear([4,10],[4,10],[[4,9]]),false);
+test('swept motion rejects furniture, walls, partitions and characters even on a long frame',()=>{
+ assert.equal(movementClear([15.5,12.5],[15.5,13.5],[[15.5,13]]),false);
+ assert.equal(movementClear([15.5,12.5],[15.5,13.5]),true);
+ assert.equal(movementClear([9,9],[9,12]),false); // accounting partition
+ assert.equal(movementClear([4.75,9],[4.75,6]),false); // printer
+ assert.equal(movementClear([16,12],[19,12]),false); // outer wall
+ assert.equal(movementClear([10.85,6.125],[10.85,4.35]),true); // widened door
+ assert.deepEqual(findPath([9.4,9.3],[9,9]),[[9,9]]); // unobstructed route stays direct
+ assert.deepEqual(findPath([NaN,9],[9,9]),[]);
 });
 test('full camera orbits and extreme pans stay within the enclosed office',()=>{
  for(const [x,z] of [[8.4,7.4],[3,7],[14,11],[-40,-40],[40,40]]){
@@ -68,6 +82,18 @@ test('full camera orbits and extreme pans stay within the enclosed office',()=>{
     assert.ok(target.z>officeBounds.back&&target.z<officeBounds.front);
    }
   }
+ }
+});
+
+test('camera boundary constraints preserve the requested orbit direction',()=>{
+ for(let angle=0;angle<Math.PI*2;angle+=Math.PI/16){
+  const target={x:8.4,y:1.3,z:7.4};
+  const offset={x:20*Math.sin(angle),y:8,z:20*Math.cos(angle)};
+  const camera={x:target.x+offset.x,y:target.y+offset.y,z:target.z+offset.z};
+  constrainOfficeCamera(camera,target);
+  const scale=(camera.y-target.y)/offset.y;
+  assert.ok(Math.abs(camera.x-target.x-offset.x*scale)<1e-8);
+  assert.ok(Math.abs(camera.z-target.z-offset.z*scale)<1e-8);
  }
 });
 test('help changes progress and relationships; interrupt reverses progress and trust',()=>{

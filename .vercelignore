@@ -1,0 +1,25 @@
+# Local builds and dependencies
+node_modules/
+.next/
+out/
+coverage/
+*.tsbuildinfo
+
+# Separate promo project and local artifacts
+videos/
+artifacts/
+scripts/
+.openai/
+.recovery/
+.codex/
+.agents/
+.git/
+.vercel/
+.env*
+office-*.png
+office-*.jpg
+
+# Editor metadata
+.vscode/
+.idea/
+Thumbs.db

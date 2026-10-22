@@ -26,7 +26,6 @@ import {
   DialogDescription,
 } from "@/components/ui/8bit/dialog"
 import { DeskInteraction } from "@/components/office/interactions"
-import { PixelArt } from "@/components/office/pixel-art"
 import { AppContent } from "./office-game"
 import {
   employees,
@@ -62,7 +61,6 @@ import {
   Clock3,
   Check,
   ArrowUpRight,
-  Search,
   ClipboardList,
   Users,
   MessageSquare,
@@ -162,6 +160,7 @@ export default function ScrantonGame() {
   const [reply, setReply] = useState<string | null>(null)
   const [focus, setFocus] = useState("dwight")
   const [focusSerial, setFocusSerial] = useState(0)
+  const [navigation, setNavigation] = useState("Click a coworker · Drag to rotate · Scroll to zoom · Shift-drag to pan")
   const lastFeedback = useRef(0)
   const [showFeedback, setShowFeedback] = useState(false)
   const dispatch: Dispatch<OfficeAction> = (a) => {
@@ -207,7 +206,7 @@ export default function ScrantonGame() {
     document.body.classList.add("office-immersive-theme")
     return () => document.body.classList.remove("office-immersive-theme")
   }, [])
-  const live = s.mode === "playing" && !s.activeEvent
+  const live = s.mode === "playing" && !s.activeEvent && !s.interaction
   const e = employeeById(s.selected)
   const p = s.people[e.id]
   const event = activeEvent(s)
@@ -225,8 +224,10 @@ export default function ScrantonGame() {
     setPanel("employee")
     setReply(null)
     playSound("open")
+    locate(id)
   }
   function locate(id: string) {
+    setDialog(null)
     setFocus(id)
     setFocusSerial((v) => v + 1)
   }
@@ -234,6 +235,8 @@ export default function ScrantonGame() {
     if (!live) return
     const st = stations.find((st) => st.id === id)
     if (!st) return
+    setFocus(`station:${id}`)
+    setFocusSerial(v => v + 1)
     playSound("open")
     if (id === "computer") {
       setApp("Mail")
@@ -279,8 +282,10 @@ export default function ScrantonGame() {
           state={s}
           onSelect={select}
           onStation={station}
+          onNavigation={setNavigation}
           focus={focus}
           focusSerial={focusSerial}
+          paused={!live || !!dialog}
         />
       </div>
       <header className="office-hud-wrap">
@@ -468,6 +473,7 @@ export default function ScrantonGame() {
                 <p key={e.id}>“{p.job ? e.response : e.greeting}”</p>
               </div>
             </div>
+            {!p.job && <div className="office-assignment-preview"><span>{e.task}</span><small>{e.duration} min · Choose Assign task to start</small></div>}
             {p.job && (
               <div className="office-task-progress">
                 <span>
@@ -501,6 +507,7 @@ export default function ScrantonGame() {
             <div className="office-person-buttons">
               <Button
                 disabled={!live || !!p.job}
+                title={p.job ? "This coworker is already working. Advance time or choose Help." : e.task}
                 onClick={() =>
                   dispatch({ type: "PERSON", id: e.id, kind: "assign" })
                 }
@@ -551,10 +558,7 @@ export default function ScrantonGame() {
       <footer className="office-footer-wrap">
         <Card font="normal" className="gap-0 py-0">
           <div className="office-footer">
-            <span>
-              Click to move <b>•</b> Drag to rotate <b>•</b> Scroll to zoom
-              <b>•</b> Shift-drag to pan
-            </span>
+            <span aria-live="polite">{navigation}</span>
             <small>
               {storageError
                 ? "Save unavailable"
@@ -810,7 +814,6 @@ export default function ScrantonGame() {
                         className="scranton-team-row"
                         onClick={() => {
                           select(e.id)
-                          locate(e.id)
                         }}
                       >
                         <Portrait employee={e} small />
@@ -1103,7 +1106,7 @@ export default function ScrantonGame() {
             <li>
               <b>Keep time moving.</b> Conversations, station activities and
               coordinating work advance the clock and every active assignment.
-              Time never runs while you're deciding.
+              Time never runs while you&apos;re deciding.
             </li>
             <li>
               <b>Look after yourself.</b> Coffee, lunch, plants and breaks
@@ -1111,8 +1114,10 @@ export default function ScrantonGame() {
               protect job security.
             </li>
             <li>
-              <b>Explore.</b> Click a coworker or an office object to interact. The camera stays inside the office. Click the floor to walk; arrow
-              keys move your character when the scene is focused.
+              <b>Explore.</b> Click a coworker to approach them using a clear route,
+              or click an office object to interact. Drag to look around, use the
+              rotate buttons for a full turn, and scroll to zoom. Click the floor
+              to walk; arrow keys move your character when the scene is focused.
             </li>
             <li>
               <b>Expect coworkers.</b> Meetings, pranks and team dependencies

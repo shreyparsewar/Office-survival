@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import * as THREE from "three"
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js"
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js"
@@ -7,9 +7,9 @@ import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js"
 import { OutlinePass } from "three/addons/postprocessing/OutlinePass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js"
 import { OrbitControls } from "three/addons/controls/OrbitControls.js"
-import { Focus, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
+import { ChevronLeft, ChevronRight, Focus, RotateCcw, ZoomIn, ZoomOut } from "lucide-react"
 import { employees } from "@/lib/scranton/roster"
-import { findPath, movementClear, rooms, stations, type Point } from "@/lib/scranton/world"
+import { findApproachPath, findPath, prepareNavigation, movementClear, rooms, stations, type Point } from "@/lib/scranton/world"
 import { constrainOfficeCamera } from "@/lib/scranton/camera"
 import type { OfficeState } from "@/lib/scranton/simulation"
 import { person, type VoxelPerson } from "./detailed-models"
@@ -22,8 +22,10 @@ type Props = {
   state: OfficeState
   onSelect: (id: string) => void
   onStation: (id: string) => void
+  onNavigation: (message: string) => void
   focus: string
   focusSerial: number
+  paused: boolean
 }
 function eDestination(id: string): Point {
   const e = employees.find((e) => e.id === id)!
@@ -37,25 +39,32 @@ export default function OfficeScene({
   state,
   onSelect,
   onStation,
+  onNavigation,
   focus,
   focusSerial,
+  paused,
 }: Props) {
   const host = useRef<HTMLDivElement>(null)
   const stateRef = useRef(state)
-  const callbacks = useRef({ onSelect, onStation })
-  stateRef.current = state
-  callbacks.current = { onSelect, onStation }
+  const callbacks = useRef({ onSelect, onStation, onNavigation })
+  const pausedRef = useRef(paused)
+  useLayoutEffect(() => {
+    stateRef.current = state
+    pausedRef.current = paused
+    callbacks.current = { onSelect, onStation, onNavigation }
+  }, [state, paused, onSelect, onStation, onNavigation])
   const controller = useRef<{
     focus: (id: string) => void
     approach: (id: string) => void
     reset: () => void
     zoom: (factor: number) => void
+    rotate: (angle: number) => void
   } | null>(null)
   const [failed, setFailed] = useState(false)
   const selectCoworker = (id: string) => {
     onSelect(id)
-    controller.current?.approach(id)
   }
+  const [navigation, setNavigationState] = useState("Click a coworker to meet them, or click the floor to walk.")
   const [hover, setHover] = useState<string | null>(null)
   const [selectedLabel, setSelectedLabel] = useState({
     x: 0,
@@ -66,11 +75,12 @@ export default function OfficeScene({
     { name: string; x: number; y: number; visible: boolean }[]
   >([])
   useEffect(() => {
-    controller.current?.focus(focus)
+    controller.current?.approach(focus)
   }, [focus, focusSerial])
   useEffect(() => {
     const el = host.current
     if (!el) return
+    const setNavigation = (message: string) => { setNavigationState(message); callbacks.current.onNavigation(message) }
     let renderer: THREE.WebGLRenderer
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
@@ -78,9 +88,9 @@ export default function OfficeScene({
       setFailed(true)
       return
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6))
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.shadowMap.type = THREE.PCFShadowMap
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
     renderer.toneMappingExposure = 1.15
@@ -92,7 +102,7 @@ export default function OfficeScene({
     const sun = new THREE.DirectionalLight("#ffddb1", 4.2)
     sun.position.set(-8, 8, -9)
     sun.castShadow = true
-    sun.shadow.mapSize.set(4096, 4096)
+    sun.shadow.mapSize.set(2048, 2048)
     sun.shadow.camera.left = -23
     sun.shadow.camera.right = 23
     sun.shadow.camera.top = 23
@@ -105,7 +115,8 @@ export default function OfficeScene({
     const camera = new THREE.PerspectiveCamera(35, 1, .1, 100)
     const composer = new EffectComposer(renderer)
     composer.addPass(new RenderPass(scene, camera))
-    const ambientOcclusion = new SSAOPass(scene, camera, 1, 1, 16)
+    const ambientOcclusion = new SSAOPass(scene, camera, 1, 1, 8)
+    ambientOcclusion.enabled = window.innerWidth > 700
     ambientOcclusion.kernelRadius = 0.3
     ambientOcclusion.minDistance = 0.001
     ambientOcclusion.maxDistance = 0.018
@@ -124,12 +135,13 @@ export default function OfficeScene({
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.target.copy(home)
     controls.enableDamping = true
+    controls.screenSpacePanning = false
     controls.dampingFactor = 0.08
     controls.rotateSpeed = 0.65
-    controls.minDistance = 2
-    controls.maxDistance = 14
-    controls.minPolarAngle = 0.25
-    controls.maxPolarAngle = Math.PI / 2 - 0.08
+    controls.minDistance = 2.5
+    controls.maxDistance = 11
+    controls.minPolarAngle = 0.35
+    controls.maxPolarAngle = 1.35
     controls.update()
     constrainOfficeCamera(camera.position, controls.target)
     camera.lookAt(controls.target)
@@ -137,18 +149,21 @@ export default function OfficeScene({
     const target = controls.target
     const desiredTarget = home.clone()
     const desiredCameraOffset = new THREE.Vector3()
-    let focusPending = false
+    let focusPending = false, focusAge = 0
+    let requestedRadius = camera.position.distanceTo(target)
+    let lastSafeRadius = requestedRadius
     controls.addEventListener("start", () => { focusPending = false; desiredTarget.copy(target) })
     const updateCamera = () => {
       camera.aspect = width / height
-      camera.fov = width / height < 1 ? 47 : 35
+      camera.fov = width / height < 1 ? 55 : 43
       camera.updateProjectionMatrix()
     }
     const resize = () => {
-      width = el.clientWidth
-      height = el.clientHeight
+      width = Math.max(1, el.clientWidth)
+      height = Math.max(1, el.clientHeight)
       renderer.setSize(width, height)
       composer.setSize(width, height)
+      ambientOcclusion.setSize(Math.ceil(width * renderer.getPixelRatio() * .5), Math.ceil(height * renderer.getPixelRatio() * .5))
       updateCamera()
     }
     const observer = new ResizeObserver(resize)
@@ -157,31 +172,33 @@ export default function OfficeScene({
     controller.current = {
       focus: (id) => {
         const actor = actors.get(id)
-        if (actor) {
-          desiredTarget.set(actor.group.position.x, 1.3, actor.group.position.z)
+        const station = stations.find(s => `station:${s.id}` === id)
+        if (actor || station) {
+          desiredTarget.set(actor ? actor.group.position.x : station!.position[0], 1.45, actor ? actor.group.position.z : station!.position[1])
           // A close three-quarter view leaves room beside the coworker for you.
-          desiredCameraOffset.set(Math.sin(.6), .58, Math.cos(.6)).normalize().multiplyScalar(6.4)
-          focusPending = true
+          desiredCameraOffset.set(Math.sin(.6), .75, Math.cos(.6)).normalize().multiplyScalar(5.8)
+          focusAge = 0; focusPending = true
         }
       },
-      reset: () => { focusPending = false; controls.reset(); desiredTarget.copy(home) },
+      reset: () => { desiredTarget.copy(home); desiredCameraOffset.set(5.8, 3.85, 7.3); focusAge = 0; focusPending = true },
       zoom: (factor) => {
-        focusPending = false
-        const offset = camera.position.clone().sub(target)
-        offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, controls.minDistance, controls.maxDistance))
-        camera.position.copy(target).add(offset)
-        controls.update()
-        constrainOfficeCamera(camera.position, target)
-        camera.lookAt(target)
+        desiredTarget.copy(target)
+        desiredCameraOffset.copy(camera.position).sub(target).setLength(THREE.MathUtils.clamp(requestedRadius * factor, controls.minDistance, controls.maxDistance))
+        focusAge = 0; focusPending = true
+      },
+      rotate: (angle) => {
+        desiredTarget.copy(target)
+        desiredCameraOffset.copy(camera.position).sub(target).normalize().multiplyScalar(requestedRadius).applyAxisAngle(new THREE.Vector3(0,1,0), angle)
+        focusAge = 0; focusPending = true
       },
       approach: (id) => {
         const actor = actors.get(id)
-        if (!actor) return
+        const station = stations.find(s => `station:${s.id}` === id)
+        if (!actor && !station) return
         controller.current?.focus(id)
-        const coworker = positionOf(actor)
+        const coworker = actor ? positionOf(actor) : station!.position
         // Face-to-face, with enough clearance for seated legs and swinging arms.
-        routePlayer([coworker[0], coworker[1] + 1.85])
-        interactingWith = id
+        routePlayer(coworker, actor ? id : undefined)
       },
     }
     const actors = new Map<string, VoxelPerson>()
@@ -224,31 +241,38 @@ export default function OfficeScene({
     scene.add(player.group)
     const positionOf = (a: VoxelPerson): Point => [a.group.position.x, a.group.position.z]
     const occupiedByOthers = (id?: string): Point[] => [
-      ...employees.filter(e => e.id !== id).flatMap(e => [e.home, positionOf(actors.get(e.id)!)]),
+      ...employees.filter(e => e.id !== id).map(e => positionOf(actors.get(e.id)!)),
       ...(id ? [positionOf(player)] : []),
     ]
     let path: Point[] = []
     let playerGoal: Point | null = null
     let playerRetryAt = 0
     let interactingWith: string | null = null
-    const routePlayer = (to: Point) => {
-      interactingWith = null
+    const routePlayer = (to: Point, coworkerId?: string) => {
+      interactingWith = coworkerId ?? null
       playerGoal = to
-      path = findPath(positionOf(player), to, occupiedByOthers())
+      path = coworkerId ? findApproachPath(positionOf(player), to, occupiedByOthers()) : findPath(positionOf(player), to, occupiedByOthers())
+      if (!coworkerId && !path.length) playerGoal = null
+      destination.visible = path.length > 0
+      setNavigation(path.length ? coworkerId ? `Walking to ${employees.find(e => e.id === coworkerId)!.name.split(" ")[0]}…` : "Walking to the marked spot…" : coworkerId && Math.hypot(player.group.position.x-to[0],player.group.position.z-to[1])<=2.2 ? "Ready to talk or assign work." : "That route is blocked. Choose a clear floor spot.")
+      if (path.length) { const end = path.at(-1)!; destination.position.set(end[0], .09, end[1]); destination.visible = true }
     }
     // Clamp each step and check its entire segment, so a long frame cannot
     // move through another character between two otherwise clear endpoints.
-    const advance = (a: VoxelPerson, route: Point[], speed: number, dt: number, occupied: Point[]) => {
+    const advance = (a: VoxelPerson, route: Point[], speed: number, dt: number, occupied: Point[], actorId?: string) => {
       if (!route.length) return false
       const from = positionOf(a), next = route[0]
       const dx = next[0] - from[0], dz = next[1] - from[1]
       const distance = Math.hypot(dx, dz)
       const fraction = distance ? Math.min(1, speed * dt / distance) : 1
       const to: Point = [from[0] + dx * fraction, from[1] + dz * fraction]
-      if (!movementClear(from, to, occupied)) return false
+      if (!movementClear(from, to, occupied, actorId)) return false
       a.group.position.x = to[0]
       a.group.position.z = to[1]
-      if (distance) a.group.rotation.y = Math.atan2(dx, dz)
+      if (distance) {
+        const angle = Math.atan2(dx, dz), difference = Math.atan2(Math.sin(angle-a.group.rotation.y),Math.cos(angle-a.group.rotation.y))
+        a.group.rotation.y += difference * (1-Math.exp(-dt*12))
+      }
       if (fraction === 1) route.shift()
       return distance > 0
     }
@@ -271,8 +295,6 @@ export default function OfficeScene({
     const hit = new THREE.Vector3()
     let dragging = false,
       dragged = false,
-      lastX = 0,
-      lastY = 0,
       downX = 0,
       downY = 0
     const pointRay = (event: PointerEvent) => {
@@ -292,10 +314,12 @@ export default function OfficeScene({
           .find(i => i.object.userData.station)
     }
     const down = (e: PointerEvent) => {
+      focusPending = false
       dragging = true
       dragged = false
       downX = e.clientX; downY = e.clientY
       renderer.domElement.setPointerCapture(e.pointerId)
+      renderer.domElement.focus({ preventScroll: true })
     }
     const move = (e: PointerEvent) => {
       if (dragging) {
@@ -309,15 +333,13 @@ export default function OfficeScene({
     }
     const up = (e: PointerEvent) => {
       dragging = false
-      if (dragged || e.button !== 0) return
+      if (dragged || e.button !== 0 || pausedRef.current) return
       const obj = pick(e)?.object
       if (obj?.userData.employee) {
         const id = obj.userData.employee
         callbacks.current.onSelect(id)
-        controller.current?.approach(id)
       } else if (obj?.userData.station) {
         callbacks.current.onStation(obj.userData.station)
-        routePlayer(stations.find((s) => s.id === obj.userData.station)!.position)
       } else {
         pointRay(e)
         if (ray.ray.intersectPlane(plane, hit))
@@ -330,7 +352,7 @@ export default function OfficeScene({
       }
     }
     const key = (e: KeyboardEvent) => {
-      if (document.activeElement !== renderer.domElement) return
+      if (document.activeElement !== renderer.domElement || pausedRef.current) return
       const dir: Record<string, Point> = {
         ArrowUp: [0, -1],
         w: [0, -1],
@@ -358,26 +380,70 @@ export default function OfficeScene({
     renderer.domElement.addEventListener("pointerdown", down)
     renderer.domElement.addEventListener("pointermove", move)
     renderer.domElement.addEventListener("pointerup", up)
+    const cancelPointer = () => { dragging = false; dragged = true }
+    renderer.domElement.addEventListener("pointercancel", cancelPointer)
+    renderer.domElement.addEventListener("lostpointercapture", cancelPointer)
     renderer.domElement.addEventListener("keydown", key)
+    prepareNavigation()
+    if (process.env.NODE_ENV === "development") Object.defineProperty(renderer.domElement, "officeSnapshot", { get: () => ({
+      player: positionOf(player),
+      people: [...actors].map(([id,a]) => ({ id, position: positionOf(a), screen: (() => { const v=a.group.position.clone();v.y=1.5;v.project(camera);return {x:(v.x+1)*width/2,y:(1-v.y)*height/2,visible:Math.abs(v.x)<.95&&Math.abs(v.y)<.85} })() })),
+      path: path.map(p => [...p]),
+      goal: playerGoal,
+      camera: { x:camera.position.x,y:camera.position.y,z:camera.position.z },
+      target: { x:target.x,y:target.y,z:target.z },
+      paused: pausedRef.current,
+      renderCalls: renderer.info.render.calls,
+      quality: ambientOcclusion.enabled ? "full" : outline.enabled ? "balanced" : "light",
+    }) })
     let frame = 0,
       last = performance.now(),
       labelTick = 0
     let alive = true
+    let qualityAge = 0, slowAge = 0, averageFrame = 16.7
     let observedRun = stateRef.current.runId
     const animate = (now: number) => {
       if (!alive) return
-      const dt = Math.min((now - last) / 1000, 0.05)
+      const elapsed = (now - last) / 1000
+      const dt = Math.min(elapsed, 0.05)
       last = now
+      // Lower the cost only after sustained slow rendering; avoid responding
+      // to initial shader compilation, tab switches, or one expensive frame.
+      if (!document.hidden && elapsed < .15) {
+        qualityAge += dt
+        averageFrame += (elapsed * 1000 - averageFrame) * .04
+        slowAge = qualityAge > 3 && averageFrame > 25 ? slowAge + dt : 0
+        if (slowAge > 1.5) {
+          if (ambientOcclusion.enabled) ambientOcclusion.enabled = false
+          else if (outline.enabled) {
+            outline.enabled = false
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, .85))
+            resize()
+          }
+          slowAge = 0
+          averageFrame = 16.7
+        }
+      }
       const t = now / 1000
+      const moveDt = pausedRef.current ? 0 : dt
+      const wasFocusing = focusPending
       if (focusPending) {
+        focusAge += dt
         const blend = 1 - Math.exp(-dt * 5)
         const offset = camera.position.clone().sub(target).lerp(desiredCameraOffset, blend)
         target.lerp(desiredTarget, blend)
         camera.position.copy(target).add(offset)
-        if (desiredTarget.distanceToSquared(target) < .0001 && offset.distanceToSquared(desiredCameraOffset) < .0001) focusPending = false
+        requestedRadius = THREE.MathUtils.clamp(offset.length(), controls.minDistance, controls.maxDistance)
+        if (focusAge >= 1 || desiredTarget.distanceToSquared(target) < .001 && offset.distanceToSquared(desiredCameraOffset) < .001) focusPending = false
       }
+      controls.enableDamping = !wasFocusing
+      controls.dampingFactor = 1 - Math.exp(-dt * 10)
       controls.update()
+      const radius = camera.position.distanceTo(target)
+      if (!wasFocusing && lastSafeRadius > .01) requestedRadius = THREE.MathUtils.clamp(requestedRadius * radius / lastSafeRadius, controls.minDistance, controls.maxDistance)
+      camera.position.sub(target).normalize().multiplyScalar(requestedRadius).add(target)
       constrainOfficeCamera(camera.position, target)
+      lastSafeRadius = camera.position.distanceTo(target)
       camera.lookAt(target)
       if (!focusPending) desiredTarget.copy(target)
       const state = stateRef.current
@@ -409,13 +475,13 @@ export default function OfficeScene({
         if (p.completed > trip.completed) {
           trip.completed = p.completed
           trip.goal = eDestination(id)
-          trip.path = findPath(current, trip.goal, occupiedByOthers(id))
+          trip.path = findPath(current, trip.goal, occupiedByOthers(id), id)
           trip.returnAt = t + 16
           trip.homeward = false
         }
         if (trip.returnAt && (t > trip.returnAt || p.job) && !trip.homeward) {
           trip.goal = employees.find((e) => e.id === id)!.home
-          trip.path = findPath(current, trip.goal, occupiedByOthers(id))
+          trip.path = findPath(current, trip.goal, occupiedByOthers(id), id)
           trip.homeward = true
           trip.returnAt = 0
         }
@@ -446,19 +512,19 @@ export default function OfficeScene({
             Math.abs(tz - a.group.position.z) >
             0.02
         if (traveling) {
-          if (!advance(a, trip.path, 2.2, dt, occupiedByOthers(id)) && t >= trip.retryAt && trip.goal) {
+          if (moveDt && !advance(a, trip.path, 2.2, moveDt, occupiedByOthers(id), id) && t >= trip.retryAt && trip.goal) {
             trip.retryAt = t + 0.6
-            trip.path = findPath(current, trip.goal, occupiedByOthers(id))
+            trip.path = findPath(current, trip.goal, occupiedByOthers(id), id)
           }
         } else if (!trip.returnAt) {
-          const next: Point = [THREE.MathUtils.damp(current[0], tx, 6, dt), THREE.MathUtils.damp(current[1], tz, 6, dt)]
-          if (movementClear(current, next, occupiedByOthers(id))) {
+          const next: Point = [THREE.MathUtils.damp(current[0], tx, 6, moveDt), THREE.MathUtils.damp(current[1], tz, 6, moveDt)]
+          if (movementClear(current, next, occupiedByOthers(id), id)) {
             a.group.position.x = next[0]
             a.group.position.z = next[1]
-          } else if (t >= trip.retryAt) {
+          } else if (t >= trip.retryAt && Math.hypot(current[0]-e.home[0],current[1]-e.home[1]) > .15) {
             trip.retryAt = t + 0.6
             trip.goal = e.home
-            trip.path = findPath(current, trip.goal, occupiedByOthers(id))
+            trip.path = findPath(current, trip.goal, occupiedByOthers(id), id)
           }
         }
         if (!traveling)
@@ -504,15 +570,27 @@ export default function OfficeScene({
         a.work.rotation.y = t * 2
       }
       if (path.length) {
-        if (!advance(player, path, 3.3, dt, occupiedByOthers()) && t >= playerRetryAt && playerGoal) {
+        if (moveDt && !advance(player, path, 3.3, moveDt, occupiedByOthers()) && t >= playerRetryAt && playerGoal) {
           playerRetryAt = t + 0.6
-          path = findPath(positionOf(player), playerGoal, occupiedByOthers())
+          const actor = interactingWith ? actors.get(interactingWith) : null
+          path = actor ? findApproachPath(positionOf(player), positionOf(actor), occupiedByOthers()) : findPath(positionOf(player), playerGoal, occupiedByOthers())
+          if (path.length) { const end = path.at(-1)!; destination.position.set(end[0],.09,end[1]) }
         }
         player.leftLeg.rotation.x = Math.sin(t * 11) * 0.6
         player.rightLeg.rotation.x = -player.leftLeg.rotation.x
         player.leftArm.rotation.x = -player.leftLeg.rotation.x * 0.5
         player.rightArm.rotation.x = -player.leftArm.rotation.x
       } else {
+        if (playerGoal) {
+          const coworker = interactingWith ? actors.get(interactingWith) : null
+          const waiting = coworker && Math.hypot(coworker.group.position.x-player.group.position.x,coworker.group.position.z-player.group.position.z)>2.3
+          if (waiting && moveDt && t >= playerRetryAt) {
+            playerRetryAt = t + .5
+            path = findApproachPath(positionOf(player),positionOf(coworker),occupiedByOthers())
+            setNavigation(path.length ? "Following the clear route…" : "Waiting for someone to pass. You can still use the task panel.")
+            if (path.length) { const end=path.at(-1)!;destination.position.set(end[0],.09,end[1]);destination.visible=true }
+          } else if (!waiting) { setNavigation(interactingWith ? "Ready to talk or assign work." : "Arrived. Click a coworker or office object."); playerGoal = null }
+        }
         destination.visible = false
         player.leftLeg.rotation.x =
           player.rightLeg.rotation.x =
@@ -574,6 +652,8 @@ export default function OfficeScene({
       observer.disconnect()
       controller.current = null
       controls.dispose()
+      renderer.domElement.removeEventListener("pointercancel", cancelPointer)
+      renderer.domElement.removeEventListener("lostpointercapture", cancelPointer)
       ambientOcclusion.dispose()
       outline.dispose()
       output.dispose()
@@ -631,7 +711,7 @@ export default function OfficeScene({
         <div className="scranton-webgl-fallback">
           <h2>3D preview unavailable</h2>
           <p>
-            This browser couldn't create a WebGL context. The entire simulation
+            This browser couldn&apos;t create a WebGL context. The entire simulation
             still works through the team directory and office stations.
           </p>
           <div>
@@ -644,6 +724,8 @@ export default function OfficeScene({
         </div>
       )}
       {!failed && <div className="scranton-scene-controls" aria-label="Camera controls">
+        <Button variant="outline" size="icon" aria-label="Rotate view left" title="Rotate view left" onClick={() => controller.current?.rotate(-Math.PI/4)}><ChevronLeft /></Button>
+        <Button variant="outline" size="icon" aria-label="Rotate view right" title="Rotate view right" onClick={() => controller.current?.rotate(Math.PI/4)}><ChevronRight /></Button>
         <Button variant="outline" size="icon" aria-label="Zoom in" title="Zoom in" onClick={() => controller.current?.zoom(0.8)}><ZoomIn /></Button>
         <Button variant="outline" size="icon" aria-label="Zoom out" title="Zoom out" onClick={() => controller.current?.zoom(1.25)}><ZoomOut /></Button>
         <Button variant="outline" size="icon" aria-label="Center selected coworker" title="Center selected coworker" onClick={() => controller.current?.focus(state.selected)}><Focus /></Button>
@@ -653,7 +735,7 @@ export default function OfficeScene({
         <span>
           {hover
             ? `CLICK TO INTERACT · ${hover}`
-            : "CLICK A COWORKER OR AN OFFICE OBJECT"}
+            : navigation}
         </span>
         <span>
           <i />

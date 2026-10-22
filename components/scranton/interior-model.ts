@@ -2,6 +2,7 @@ import * as THREE from "three"
 import { employees } from "@/lib/scranton/roster"
 import { stations } from "@/lib/scranton/world"
 import { officeBounds } from "@/lib/scranton/camera"
+import { managerWalls, partitions, deskPositions, receptionPosition } from "@/lib/scranton/layout"
 import { voxel, texture, surface, sign, batch, binders, papers, cup, plant, monitor, keyboard, desk, chair, partition, printer, glass, bookshelf } from "./detailed-models"
 
 /** One furnished interior, composed for a close game camera rather than a floor plan. */
@@ -54,12 +55,9 @@ export function officeModel() {
 
   // Manager's room is behind the action, with an open glass doorway.
   const glazing=new THREE.MeshStandardMaterial({color:"#96b4b1",transparent:true,opacity:.075,roughness:.15,depthWrite:false})
-  glass(world,8.05,2.9,.065,5.15,glazing)
-  glass(world,9.1,5.4,2.03,.065,glazing)
-  glass(world,12.25,5.4,2.8,.065,glazing)
-  glass(world,13.65,2.9,.065,5.15,glazing)
+  for(const wall of managerWalls) glass(world,wall.x,wall.z,wall.w-(wall.w>wall.d?.08:.03),wall.d-(wall.w>wall.d?.03:.08),glazing)
   sign(world,"MANAGER",12.15,2.75,5.46,1.1,.26)
-  desk(world,10.4,2.15,wood);chair(world,10.4,2.95,fabric)
+  chair(world,10.4,2.95,fabric)
   bookshelf(world,12.75,.84,wood)
   plant(world,12.9,4.8,.96)
   const lamp=voxel(world,"#f3d79a",11.5,1.3,2.1,.35,.28,.35)
@@ -72,20 +70,21 @@ export function officeModel() {
   // Spacious work areas leave the central aisle and characters readable.
   for(const e of employees){
     if(["michael","pam","jim"].includes(e.id))continue
-    desk(world,e.home[0],e.home[1]-.8,wood)
     chair(world,e.home[0],e.home[1]+.24,fabric)
   }
-  desk(world,3,5.75,wood);chair(world,3,6.5,fabric)
-  for(const [x,z,w,d] of [[5.5,6.7,4.95,.1],[5.85,7.48,.1,1.55],[9.1,7.5,.1,1.65],[9.1,10.7,8.1,.1],[2,10.75,.1,2]])partition(world,x,z,w,d)
-  printer(world,5.25,8.8)
-  plant(world,5.6,6.4,.55)
-  plant(world,8.55,5.85,.8)
+  for(const place of deskPositions) desk(world,place.x,place.z,wood)
+  chair(world,3,6.5,fabric)
+  for(const wall of partitions) partition(world,wall.x,wall.z,wall.w,wall.d)
+  const printerStation=stations.find(s=>s.id==="printer")!
+  printer(world,...printerStation.position)
+  plant(world,5.6,5.2,.55)
+  plant(world,7.2,5,.8)
   plant(world,12.8,8.25,1.16)
   plant(world,2,5.5,.9)
 
   // Reception stays on the right, as in the reference image.
-  desk(world,14,6.25,wood);chair(world,14,7.1,fabric)
-  const reception=new THREE.Group();reception.position.set(14,0,8.0);world.add(reception)
+  chair(world,14,7.1,fabric)
+  const reception=new THREE.Group();reception.position.set(receptionPosition[0],0,receptionPosition[1]);world.add(reception)
   voxel(reception,wood,0,1.0,0,3.05,.15,1.15)
   voxel(reception,"#c7b18b",0,.47,.52,2.96,.96,.1)
   voxel(reception,"#a88a62",0,.47,.58,2.98,.075,.02)
@@ -118,8 +117,7 @@ export function officeModel() {
   voxel(world,"#d1ccba",16.15,1.1,2.15,.82,2.2,.79)
   voxel(world,"#676f64",15.715,1.45,2.15,.035,.3,.065)
   // The foreground continues beyond the camera; there are no exposed floor-plan edges.
-  desk(world,4,12.5,wood);partition(world,4,13.22,4.2,.12);plant(world,2,12,.85)
-  desk(world,10,13.2,wood);partition(world,10.1,14,4.3,.12)
+  plant(world,2,12,.85)
   papers(world,9.45,1.1,13.3);binders(world,9,1.17,13.1)
   // Reception and storage complete the walls revealed by orbiting the camera.
   bookshelf(world,16.65,14.35,wood)

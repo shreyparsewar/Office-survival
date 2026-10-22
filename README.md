@@ -5,7 +5,8 @@ An interactive browser game set in a retro 3D office inspired by *The Office*. E
 ## Features
 
 - Ten interactive coworkers: Michael, Dwight, Jim, Pam, Ryan, Andy, Stanley, Kevin, Angela, and Oscar.
-- An enclosed 3D office with camera rotation, zoom, movement, and character selection.
+- An enclosed 3D office with full camera rotation, zoom, movement, and character selection.
+- Obstacle-aware routes around walls, partitions, furniture, and coworkers, with safe stopping points for conversations.
 - Individual dialogue, relationships, assignments, and progress tracking.
 - Office stations and activities, scheduled meetings, events, deadlines, and multiple endings.
 - Local autosave, optional interface sounds, and pixel portraits.
@@ -13,7 +14,7 @@ An interactive browser game set in a retro 3D office inspired by *The Office*. E
 
 ## Run locally
 
-Requires Node.js 22.18 or newer and pnpm.
+Requires Node.js 24.x and pnpm 11.8.0.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -21,6 +22,12 @@ pnpm dev
 ```
 
 Open [localhost:3000](http://localhost:3000).
+
+Development and production builds use webpack to avoid the Turbopack hot-reload and Windows dependency-path errors observed locally. Rendering automatically reduces expensive effects when sustained frame times rise.
+
+## Deploy to Vercel
+
+The project includes Vercel build settings and a pinned toolchain. See [VERCEL.md](VERCEL.md) for GitHub import and terminal deployment instructions. No environment variables are required.
 
 ## Promo video
 
@@ -31,13 +38,13 @@ Watch the [20-second animated game promo](videos/office-game-promo/out/office-su
 | Action | Control |
 | --- | --- |
 | Walk / select a coworker | Click the floor / coworker |
-| Rotate the camera | Drag |
+| Rotate the camera | Drag or use the left/right camera buttons |
 | Zoom | Mouse wheel or camera buttons |
 | Pan | Right-drag or Shift-drag |
 | Move your character | Arrow keys |
 | Focus / reset the camera | Camera controls |
 
-Talk to coworkers, assign tasks, and advance office time to make work progress. Office decisions can pause other actions until resolved. Progress is stored in this browser's local storage.
+Click a coworker in the office or Team directory to approach them. The task panel previews their next assignment before you start it. Assign tasks and advance office time to make work progress. Office decisions and activity dialogs pause walking until resolved. Progress is stored in this browser's local storage.
 
 ## Project checks
 
@@ -46,6 +53,8 @@ pnpm test
 pnpm typecheck
 pnpm build
 ```
+
+With the development server running, `node tests/browser-office.mjs` checks live coworker routes, full camera rotations, task actions, and mobile controls. It uses Chrome at its standard Windows install path and Playwright from the promo project's installed dependencies. Screenshots and its report are saved in `artifacts/`.
 
 The project exports a static website into `out/` during the production build. Serve that folder with a static hosting service. For local development, use `pnpm dev`.
 
