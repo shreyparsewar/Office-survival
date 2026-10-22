@@ -1,12 +1,14 @@
 """Original 120 BPM electronic trailer bed and synchronized transition sound design."""
 from pathlib import Path
 import wave
+import sys
 import numpy as np
 
 sr = 44100
 duration = 20
 mix = np.zeros((sr * duration, 2))
 rng = np.random.default_rng(1999)
+quiet = '--quiet' in sys.argv
 
 def add(signal, at, volume=1, pan=0):
     start = round(at * sr)
@@ -44,11 +46,11 @@ def drum(at, kind, vol=1):
         noise = rng.normal(0, 1, len(t))
         noise -= np.convolve(noise, np.ones(8)/8, mode='same')
         sound = noise*np.exp(-t*24)*.37 + np.sin(2*np.pi*185*t)*np.exp(-t*35)*.24
-        add(sound, at, .32*vol)
+        add(sound, at, (.24 if quiet else .32)*vol)
     else:
         noise = rng.normal(0, 1, len(t))
         noise -= np.convolve(noise, np.ones(4)/4, mode='same')
-        add(noise*np.exp(-t*(95 if kind == 'hat' else 30)), at, .032*vol, (-1 if round(at*8)%2 else 1)*.6)
+        add(noise*np.exp(-t*(95 if kind == 'hat' else 30)), at, (.016 if quiet else .032)*vol, (-1 if round(at*8)%2 else 1)*.6)
 
 chords = [(33,[57,60,64]), (29,[53,57,60]), (36,[55,60,64]), (31,[55,59,62])]
 for bar in range(10):
@@ -71,7 +73,7 @@ for bar in range(10):
             add(tone(lead,.22,'pluck'),at+beat*.5,.06,.3)
             add(tone(lead,.22,'pluck'),at+beat*.5+.1875,.024,-.5)
 
-for cut in [2,4.5,7,9,12,14.5,17]:
+for cut in ([] if quiet else [2,4.5,7,9,12,14.5,17]):
     length=.5
     t=np.arange(round(length*sr))/sr
     noise=rng.normal(0,1,len(t))
@@ -90,7 +92,7 @@ fade[-17640:]=np.linspace(1,0,17640)
 mix*=fade[:,None]
 mix=np.tanh(mix*1.1)
 mix*=.91/max(.91,float(np.max(np.abs(mix))))
-out=Path(__file__).parents[1]/'public/audio/office-beat-v2.wav'
+out=Path(__file__).parents[1]/('public/audio/office-beat-v3.wav' if quiet else 'public/audio/office-beat-v2.wav')
 with wave.open(str(out),'wb') as f:
     f.setnchannels(2);f.setsampwidth(2);f.setframerate(sr)
     f.writeframes((mix*32767).astype('<i2').tobytes())

@@ -6,8 +6,22 @@
  */
 
 import { Config } from "@remotion/cli/config";
+import path from "node:path";
 
 Config.setRspack(true);
 Config.setVideoImageFormat("jpeg");
 Config.setOverwriteOutput(true);
 Config.setDefaultPremountInSeconds(2);
+Config.overrideRspackConfig((config) => ({
+  ...config,
+  resolve: {
+    ...config.resolve,
+    alias: {
+      ...config.resolve?.alias,
+      "@/components/ui/8bit/styles/retro.css": path.resolve("src/retro-local.css"),
+      "@": path.resolve("../.."),
+      react: path.resolve("node_modules/react"),
+      "react-dom": path.resolve("node_modules/react-dom"),
+    },
+  },
+}));

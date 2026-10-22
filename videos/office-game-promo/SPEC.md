@@ -15,8 +15,8 @@ Actual game models, roster and office layout rendered directly in Remotion Three
 | 14.5–17 | Office payoff with clock advancing | Make it to 5 PM. |
 | 17–20 | Animated cast on a lit stage | Office Survival 1999. Play the game. |
 
-Motion: camera tracking and dives, joint animation, staggered 150–190 px type, 0.4 s directional slashes, 0.54 s paper sweep, 0.58 s clock iris. Titles settle within 0.5 s; final title holds over 2 s.
+Motion: camera tracking and dives, joint animation, 0.4 s directional slashes, 0.54 s paper sweep, 0.58 s clock iris. Text stays aligned inside the game's actual 8bit cards and reveals with a 0.13 s opacity fade. No text bounce, rotation or scale. Final title holds over 2 s.
 
-Palette: navy #09212a, cream #fff7df, lime #d7ff43, coral #ff6948. Anton titles and Press Start 2P labels. Original 120 BPM stereo electronic music with timed sweeps and bass impacts.
+Palette: navy #102a39, cream #f8f3df, green #378457, amber #d6a64f. Press Start 2P throughout the UI. Original 120 BPM stereo music at about 2 dB lower RMS than V2; transition sweeps and bass impacts removed, hi-hats reduced by half, and snare level reduced.
 
 QA: lint and typecheck; representative shot frames; decoded motion and transition sheets; exact frame count and timestamp cadence; check for consecutive duplicate frames and frozen runs. No source recording is used, avoiding dropped capture frames.

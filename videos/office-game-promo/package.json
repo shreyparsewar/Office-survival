@@ -1,7 +1,7 @@
 {
   "name": "office-game-promo",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "Office Survival 1999 animated game promo",
   "repository": {},
   "license": "UNLICENSED",
   "engines": {
@@ -33,6 +33,7 @@
   },
   "scripts": {
     "dev": "remotion studio",
+    "build:ui": "node scripts/build-ui-css.mjs",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc"

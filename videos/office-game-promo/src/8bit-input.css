@@ -1,0 +1,20 @@
+@import "tailwindcss" source(none);
+@source "../../../components/ui";
+@source "./OfficePromo.tsx";
+@theme inline {
+  --color-background: #f8f3df;
+  --color-foreground: #102a39;
+  --color-card: #f8f3df;
+  --color-card-foreground: #102a39;
+  --color-primary: #378457;
+  --color-primary-foreground: #f8f3df;
+  --color-secondary: #d2d5ba;
+  --color-secondary-foreground: #102a39;
+  --color-border: #102a39;
+  --color-ring: #467d67;
+  --color-muted: #d9d9c6;
+  --color-muted-foreground: #606957;
+  --color-destructive: #ad4838;
+}
+/* Video typography is positioned by the timeline; CSS transition clocks are disabled. */
+.promo-ui *, .promo-ui *::before, .promo-ui *::after { transition: none !important; animation: none !important; }

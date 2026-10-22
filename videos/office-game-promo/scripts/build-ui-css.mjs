@@ -1,0 +1,11 @@
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { resolve } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
+const gameRequire = createRequire(pathToFileURL(resolve('../../package.json')));
+const plugin = gameRequire('@tailwindcss/postcss');
+const postcss = createRequire(gameRequire.resolve('@tailwindcss/postcss'))('postcss');
+const input = resolve('src/8bit-input.css');
+const result = await postcss([plugin()]).process(await readFile(input, 'utf8'), { from: input, to: resolve('src/8bit-compiled.css') });
+await writeFile('src/8bit-compiled.css', result.css);
+console.log('Compiled the existing game UI library styles for the video.');
