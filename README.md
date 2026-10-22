@@ -24,7 +24,7 @@ Open [localhost:3000](http://localhost:3000).
 
 ## Promo video
 
-Watch the [20-second game promo](videos/office-game-promo/out/office-survival-1999-promo.mp4). Its editable Remotion project and render instructions are in [videos/office-game-promo](videos/office-game-promo/README.md).
+Watch the [20-second animated game promo](videos/office-game-promo/out/office-survival-1999-promo-v2.mp4), rendered at 1080p and 60 fps. Its editable Remotion project and render instructions are in [videos/office-game-promo](videos/office-game-promo/README.md).
 
 ## Controls
 

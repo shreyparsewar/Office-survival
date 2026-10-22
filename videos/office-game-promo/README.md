@@ -1,6 +1,6 @@
 # Office Survival 1999 promo
 
-A 20-second, 1920×1080, 30 fps game promo. It uses captured footage and screenshots from the running game, an original retro instrumental, and animated typography and transitions. The edit was planned with the HyperFrames story and motion workflow and built in Remotion.
+A 20-second, 1920×1080, 60 fps game promo. It uses the actual game models with frame-driven character animation, moving cameras, original electronic music, and synchronized transition sound design. The edit uses the HyperFrames story and motion workflow and is built in Remotion.
 
 ## Preview and render
 
@@ -14,17 +14,17 @@ npm run dev
 The composition is `OfficeSurvival1999`. To export the MP4:
 
 ```sh
-npx remotion render src/index.ts OfficeSurvival1999 out/office-survival-1999-promo.mp4 --codec=h264
+npx remotion render src/index.ts OfficeSurvival1999 out/office-survival-1999-promo-v2.mp4 --codec=h264 --crf=20 --gl=angle
 ```
 
 On this Windows machine, the render uses the installed Chrome browser:
 
 ```powershell
-npx remotion render src/index.ts OfficeSurvival1999 out/office-survival-1999-promo.mp4 --codec=h264 --browser-executable='C:\Program Files\Google\Chrome\Application\chrome.exe'
+npx remotion render src/index.ts OfficeSurvival1999 out/office-survival-1999-promo-v2.mp4 --codec=h264 --crf=20 --gl=angle --browser-executable='C:\Program Files\Google\Chrome\Application\chrome.exe'
 ```
 
-The music is generated from `scripts/make-music.py`. The game captures live in `public/captures/`; the render does not require the game server.
+The music is generated from `scripts/make-music-v2.py`. The models in `src/game/` are snapshots of the game models, roster and office layout, with local imports and lint cleanup. Every pose and camera move is calculated from the video frame. The render does not require a browser recording or live game server. Older captures remain as editable source material.
 
 ## Edit structure
 
-The six beats are: clock in, meet the team, assign work, advance time, survive until 5 PM, and the title card. `STORYLINES.md` and `SPEC.md` document the concept and timing. The editable composition is `src/OfficePromo.tsx`.
+The eight beats are: rush into the office, meet Jim, delegate to Dwight, Michael's meeting, run through the aisle, the full team, make it to 5 PM, and the animated cast with a play call to action. `SPEC.md` documents the current timing. The composition is `src/OfficePromo.tsx` and the animated 3D set is `src/CinemaWorld.tsx`. `scripts/audit-video.py` checks the finished file for frame cadence and duplicate frames and creates motion review sheets.

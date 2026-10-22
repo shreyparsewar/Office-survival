@@ -1,14 +1,22 @@
-GOAL: In 20 seconds, show that Office Survival 1999 is a playable 3D office day with coworker interaction and real work assignments.
-OUTPUT: Remotion MP4, 1920x1080, 30 fps, 600 frames.
-TIME: 20.0 seconds. Motion accents land near a 120 BPM grid (15 frames per beat).
-LOOK: Use actual game captures for every product screen. Cream #f8f3df, navy #102a39, green #378457, amber #d6a64f. Pixel display face Press Start 2P, Courier New for supporting copy. No gradients, neon, or invented UI.
-MOTION: 12-18 frame eased camera moves; faster 6-9 frame exits. Titles land and hold. Transitions: cream color flood, directional wipe, object zoom, title-bar pull.
-SHOTS:
-  000-090: 3D office at 9 AM; MONDAY. SCRANTON. arrives in a physical cream strip.
-  090-210: Camera finds Jim in real footage; 10 COWORKERS lands, then the selection becomes the next shot.
-  210-315: Real task assignment screenshot. Crop into the working card; ONE BRANCH REPORT.
-  315-435: Real gameplay advances; time and work progress become the hero; THE CLOCK MOVES.
-  435-510: Full office returns, then the actual objective MAKE IT TO 5 PM fills the frame.
-  510-600: Navy and cream title lockup performs in, with CLOCK IN held for the final 2 seconds.
-BANNED: Invented product screens, tiny centered screenshots, slow drifting titles, repeated fade-and-slide entrances, unlicensed footage, false gameplay claims.
-QA: Inspect frames 0, 45, 90, 150, 210, 260, 315, 375, 435, 480, 510, 570, 599 and every transition seam.
+# Revised promo specification
+
+20 seconds / 1920×1080 / 60 fps / 1,200 timeline frames.
+
+Actual game models, roster and office layout rendered directly in Remotion ThreeCanvas. Character poses and camera paths use timeline time. No browser recordings or screenshot holds in this version.
+
+| Seconds | Action | Editorial beat |
+| --- | --- | --- |
+| 0–2 | Camera arrival into an active office | Your shift. Your problem. |
+| 2–4.5 | Jim walks with a tracking camera | Work hard. Socialize harder. |
+| 4.5–7 | Dwight types; task progress advances | Delegate. Get it done. |
+| 7–9 | Michael gestures with mug in hand | Another meeting?! |
+| 9–12 | Player runs down the aisle; papers fly | Keep moving. |
+| 12–14.5 | Camera sweep over the animated team | 10 coworkers. Zero chill. |
+| 14.5–17 | Office payoff with clock advancing | Make it to 5 PM. |
+| 17–20 | Animated cast on a lit stage | Office Survival 1999. Play the game. |
+
+Motion: camera tracking and dives, joint animation, staggered 150–190 px type, 0.4 s directional slashes, 0.54 s paper sweep, 0.58 s clock iris. Titles settle within 0.5 s; final title holds over 2 s.
+
+Palette: navy #09212a, cream #fff7df, lime #d7ff43, coral #ff6948. Anton titles and Press Start 2P labels. Original 120 BPM stereo electronic music with timed sweeps and bass impacts.
+
+QA: lint and typecheck; representative shot frames; decoded motion and transition sheets; exact frame count and timestamp cadence; check for consecutive duplicate frames and frozen runs. No source recording is used, avoiding dropped capture frames.
