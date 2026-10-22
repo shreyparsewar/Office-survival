@@ -42,7 +42,7 @@ export const OfficePromo = () => {
   const clockText = `${String(Math.floor(clock / 60)).padStart(2, "0")}:${String(clock % 60).padStart(2, "0")}`;
 
   return <AbsoluteFill className="promo-ui" style={{ background: ink, overflow: "hidden" }}>
-    <Audio src={staticFile("audio/office-beat-v3.wav")} volume={.65} />
+    <Audio src={staticFile("audio/office-funk-v4.wav")} volume={1} />
     <AbsoluteFill style={{ transform: `scale(${1 + seam * .045}) translateX(${whip ? (1 - local / .18) ** 3 * 120 : 0}px)`, filter: `blur(${seam * (edge < .14 ? 11 : 0)}px)` }}><CinemaWorld /></AbsoluteFill>
     <AbsoluteFill style={{ background: shot === 7 ? "linear-gradient(90deg, #09212af5 0%, #09212ad9 39%, transparent 68%)" : "linear-gradient(0deg, #09212a70 0%, transparent 40%)" }} />
 

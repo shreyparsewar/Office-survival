@@ -17,6 +17,6 @@ Actual game models, roster and office layout rendered directly in Remotion Three
 
 Motion: camera tracking and dives, joint animation, 0.4 s directional slashes, 0.54 s paper sweep, 0.58 s clock iris. Text stays aligned inside the game's actual 8bit cards and reveals with a 0.13 s opacity fade. No text bounce, rotation or scale. Final title holds over 2 s.
 
-Palette: navy #102a39, cream #f8f3df, green #378457, amber #d6a64f. Press Start 2P throughout the UI. Original 120 BPM stereo music at about 2 dB lower RMS than V2; transition sweeps and bass impacts removed, hi-hats reduced by half, and snare level reduced.
+Palette: navy #102a39, cream #f8f3df, green #378457, amber #d6a64f. Press Start 2P throughout the UI. Soundtrack: "Funk Game Loop" by Kevin MacLeod, licensed under CC BY 3.0, adjusted from 104 to 120 BPM with pitch preserved, trimmed to 20 seconds and mixed to -18 LUFS with a 0.85-second fade. Include MUSIC-CREDIT.txt in the publishing caption. No transition sound effects.
 
 QA: lint and typecheck; representative shot frames; decoded motion and transition sheets; exact frame count and timestamp cadence; check for consecutive duplicate frames and frozen runs. No source recording is used, avoiding dropped capture frames.
